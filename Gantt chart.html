@@ -132,6 +132,7 @@
             </div>
         </div>
 
+        <!-- Gantt Chart Area -->
         <div class="overflow-x-auto p-6" id="ganttContainer">
             <div id="chartWrapper" class="min-w-[800px]">
                 <div id="dateHeader" class="flex date-header mb-2 border-b pb-2"></div>
@@ -139,9 +140,10 @@
             </div>
         </div>
 
+        <!-- Active Tasks Table -->
         <div class="p-6 bg-white border-t border-gray-200">
             <h2 class="text-lg font-semibold text-gray-700 italic mb-4">進行中のタスク（クリックで編集・矢印で並び替え）</h2>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto mb-8">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-100">
                         <tr>
@@ -155,13 +157,34 @@
                     <tbody id="taskListBody" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
             </div>
+
+            <!-- Completed Tasks Section -->
+            <div id="completedTasksSection" class="mt-12 opacity-75">
+                <h2 class="text-lg font-semibold text-gray-500 mb-4 border-b pb-2 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    完了済みのタスク
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50 text-gray-400">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium uppercase">タスク名</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium uppercase">完了日（終了予定）</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium uppercase">メモ</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium uppercase">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completedListBody" class="bg-white divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // ローカルストレージからデータを読み込む（なければ初期値）
+        // Data loading from LocalStorage
         let tasks = JSON.parse(localStorage.getItem('gantt_tasks')) || [
-            { id: 1, name: 'プロジェクト開始', start: '2024-05-01', end: '2024-05-05', progress: 100, memo: '完了報告済み', color: '#3b82f6', completed: false },
+            { id: 1, name: 'プロジェクト開始', start: '2024-05-01', end: '2024-05-05', progress: 100, memo: '完了報告済み', color: '#3b82f6', completed: true },
             { id: 2, name: '要件定義', start: '2024-05-06', end: '2024-05-15', progress: 60, memo: 'ステークホルダー調整中', color: '#10b981', completed: false }
         ];
 
@@ -186,7 +209,6 @@
 
         function checkNotifPermission() {
             if (!("Notification" in window)) return;
-            // すでに許可されている、または拒否されている場合は表示しない
             if (Notification.permission === "default") {
                 document.getElementById('notifBanner').classList.remove('hidden');
             } else {
@@ -257,11 +279,20 @@
         }
 
         function moveTask(index, direction) {
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= tasks.length) return;
-            const temp = tasks[index];
-            tasks[index] = tasks[newIndex];
-            tasks[newIndex] = temp;
+            // "進行中のタスク" 内でのインデックス計算が必要
+            const activeTasks = tasks.filter(t => !t.completed);
+            const targetTask = activeTasks[index];
+            const realIndex = tasks.indexOf(targetTask);
+            
+            const nextActiveTask = activeTasks[index + direction];
+            if (!nextActiveTask) return;
+            const nextRealIndex = tasks.indexOf(nextActiveTask);
+
+            // 入れ替え
+            const temp = tasks[realIndex];
+            tasks[realIndex] = tasks[nextRealIndex];
+            tasks[nextRealIndex] = temp;
+
             saveToLocalStorage();
             renderGantt();
             renderTaskList();
@@ -273,6 +304,8 @@
                 task[field] = value;
                 saveToLocalStorage();
                 renderGantt();
+                // 完了済みセクションも更新されるように再描画
+                renderTaskList();
             }
         }
 
@@ -280,16 +313,22 @@
             const task = tasks.find(t => t.id === id);
             if (task) {
                 task.completed = !task.completed;
-                if (task.completed) task.progress = 100;
+                if (task.completed) {
+                    task.progress = 100;
+                } else {
+                    // 復元した時は少し進捗を戻すか、そのままにするか選べますが、ここでは100のまま保持
+                }
                 saveToLocalStorage();
-                renderGantt(); renderTaskList();
+                renderGantt(); 
+                renderTaskList();
             }
         }
 
         function deleteTask(id) {
             tasks = tasks.filter(t => t.id !== id);
             saveToLocalStorage();
-            renderGantt(); renderTaskList();
+            renderGantt(); 
+            renderTaskList();
         }
 
         function getRange() {
@@ -344,15 +383,18 @@
                 row.appendChild(label);
                 const grid = document.createElement('div');
                 grid.className = 'flex-grow h-full relative border-l border-gray-100';
+                
                 const taskStart = new Date(task.start);
                 const offsetDays = Math.ceil((taskStart - range.start) / (1000 * 60 * 60 * 24));
                 const durationDays = Math.max(1, Math.ceil((new Date(task.end) - taskStart) / (1000 * 60 * 60 * 24)) + 1);
+                
                 const bar = document.createElement('div');
                 bar.className = 'task-bar';
                 bar.style.left = `${offsetDays * dayWidth}px`;
                 bar.style.width = `${durationDays * dayWidth}px`;
                 bar.style.backgroundColor = task.color;
                 bar.innerHTML = `<span class="truncate text-[10px] font-bold">${task.progress}%</span>`;
+                
                 const progressOverlay = document.createElement('div');
                 progressOverlay.className = 'progress-overlay';
                 progressOverlay.style.width = `${task.progress}%`;
@@ -364,14 +406,21 @@
 
         function renderTaskList() {
             const body = document.getElementById('taskListBody');
+            const completedBody = document.getElementById('completedListBody');
             body.innerHTML = '';
-            tasks.filter(t => !t.completed).forEach((task, index) => {
+            completedBody.innerHTML = '';
+
+            const activeTasks = tasks.filter(t => !t.completed);
+            const completedTasks = tasks.filter(t => t.completed);
+
+            // Render Active Tasks
+            activeTasks.forEach((task, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="px-4 py-3 text-sm text-gray-400">
                         <div class="flex flex-col">
-                            <button onclick="moveTask(${index}, -1)" class="hover:text-blue-600">▲</button>
-                            <button onclick="moveTask(${index}, 1)" class="hover:text-blue-600">▼</button>
+                            <button onclick="moveTask(${index}, -1)" class="hover:text-blue-600 ${index === 0 ? 'invisible' : ''}">▲</button>
+                            <button onclick="moveTask(${index}, 1)" class="hover:text-blue-600 ${index === activeTasks.length - 1 ? 'invisible' : ''}">▼</button>
                         </div>
                     </td>
                     <td class="px-4 py-3 text-sm font-medium text-gray-900">
@@ -392,12 +441,37 @@
                             class="editable-input text-xs border-b border-gray-100">
                     </td>
                     <td class="px-4 py-3 text-right space-x-2">
-                        <button onclick="toggleComplete(${task.id})" class="text-green-600 hover:text-green-800 text-sm font-bold">完了</button>
+                        <button onclick="toggleComplete(${task.id})" class="text-green-600 hover:text-green-800 text-sm font-bold">完了にする</button>
                         <button onclick="deleteTask(${task.id})" class="text-red-400 hover:text-red-600 text-sm">削除</button>
                     </td>
                 `;
                 body.appendChild(tr);
             });
+
+            // Render Completed Tasks
+            completedTasks.forEach((task) => {
+                const tr = document.createElement('tr');
+                tr.className = "bg-gray-50";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-sm text-gray-400 line-through font-medium">
+                        ${task.name}
+                    </td>
+                    <td class="px-4 py-3 text-xs text-gray-400">
+                        ${task.end}
+                    </td>
+                    <td class="px-4 py-3 text-xs text-gray-400 italic">
+                        ${task.memo || '-'}
+                    </td>
+                    <td class="px-4 py-3 text-right space-x-2">
+                        <button onclick="toggleComplete(${task.id})" class="text-blue-500 hover:text-blue-700 text-sm">復元</button>
+                        <button onclick="deleteTask(${task.id})" class="text-red-300 hover:text-red-500 text-sm">完全削除</button>
+                    </td>
+                `;
+                completedBody.appendChild(tr);
+            });
+
+            // Hide section if no completed tasks
+            document.getElementById('completedTasksSection').style.display = completedTasks.length ? 'block' : 'none';
         }
 
         window.onload = init;
