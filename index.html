@@ -474,6 +474,21 @@
             document.getElementById('completedTasksSection').style.display = completedTasks.length ? 'block' : 'none';
         }
 
+        // スライダー操作中にリアルタイムで見た目だけ更新する関数（爆速化）
+        function updateRangePreview(el, id) {
+            const val = el.value + '%';
+            // 数値を更新
+            document.querySelector(`.range-val-${id}`).innerText = val;
+            // ガントチャート上のバーとテキストを更新（DOMを直接触るので軽い）
+            const bar = document.querySelector(`.progress-bar-${id}`);
+            const text = document.querySelector(`.progress-text-${id}`);
+            if (bar) bar.style.width = val;
+            if (text) text.innerText = val;
+            
+            // データだけ更新（保存はするが再描画はしない）
+            updateTaskFieldNoRefresh(id, 'progress', parseInt(el.value));
+        }
+
         window.onload = init;
     </script>
 </body>
