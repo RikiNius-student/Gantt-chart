@@ -16,7 +16,9 @@
             min-width: 40px;
             height: 100%;
             position: relative;
+            flex-shrink: 0;
         }
+        /* Sticky Column for Task Names */
         .sticky-col {
             position: sticky;
             left: 0;
@@ -26,9 +28,7 @@
             box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
         }
         .today-column {
-            background-color: rgba(239, 68, 68, 0.15) !important; 
-            border-left: 1px solid rgba(239, 68, 68, 0.3);
-            border-right: 1px solid rgba(239, 68, 68, 0.3);
+            background-color: rgba(239, 68, 68, 0.1) !important; 
         }
         .today-line {
             position: absolute;
@@ -39,7 +39,6 @@
             background-color: #ef4444;
             z-index: 15;
             pointer-events: none;
-            box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
         }
         .task-bar {
             height: 24px;
@@ -54,9 +53,6 @@
             cursor: pointer;
             transition: opacity 0.2s;
         }
-        .task-bar:hover {
-            opacity: 0.9;
-        }
         .progress-overlay {
             position: absolute;
             left: 0;
@@ -68,7 +64,7 @@
         .date-header {
             position: sticky;
             top: 0;
-            z-index: 20;
+            z-index: 40;
             background: white;
         }
         ::-webkit-scrollbar {
@@ -97,106 +93,84 @@
 </head>
 <body class="bg-gray-50 min-h-screen p-4 md:p-8">
     <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        <!-- Notification Permission Banner -->
+        <!-- Notification Banner -->
         <div id="notifBanner" class="hidden bg-blue-50 p-4 border-b border-blue-100 flex items-center justify-between">
             <div class="flex items-center text-blue-700 text-sm">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                通知（当日・5日前・10日前）を有効にしてリマインドを受け取りますか？
+                通知を有効にしますか？（当日・5日前）
             </div>
             <div class="flex space-x-2">
-                <button onclick="requestNotifPermission()" class="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700 transition">有効にする</button>
-                <button onclick="dismissNotifBanner()" class="text-blue-400 hover:text-blue-600 px-2 py-1 text-sm">後で</button>
+                <button onclick="requestNotifPermission()" class="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">有効にする</button>
+                <button onclick="dismissNotifBanner()" class="text-blue-400 text-sm">後で</button>
             </div>
         </div>
 
-        <div class="p-6 border-b border-gray-200 bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h1 class="text-2xl font-bold text-gray-800">ガントチャート・ジェネレーター</h1>
-                <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">データを自動保存中</span>
-            </div>
-            
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">ガントチャート・ジェネレーター</h1>
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">タスク名</label>
-                    <input type="text" id="taskName" placeholder="例: デザイン作成" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm">
+                    <input type="text" id="taskName" class="mt-1 block w-full border rounded-md p-2 text-sm shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">開始日</label>
-                    <input type="date" id="startDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm">
+                    <input type="date" id="startDate" class="mt-1 block w-full border rounded-md p-2 text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">終了日</label>
-                    <input type="date" id="endDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm">
+                    <input type="date" id="endDate" class="mt-1 block w-full border rounded-md p-2 text-sm">
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-sm font-medium text-gray-700">メモ</label>
-                    <input type="text" id="taskMemo" placeholder="状況など" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm">
+                    <input type="text" id="taskMemo" class="mt-1 block w-full border rounded-md p-2 text-sm">
                 </div>
                 <div class="flex items-end">
-                    <button onclick="addTask()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
-                        追加
-                    </button>
+                    <button onclick="addTask()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-bold transition">追加</button>
                 </div>
             </div>
         </div>
 
-        <!-- Gantt Chart Area -->
-        <div class="overflow-x-auto p-6" id="ganttContainer">
-            <div id="chartWrapper" class="min-w-[800px]">
+        <!-- Gantt Chart View -->
+        <div class="overflow-x-auto p-6 scroll-smooth" id="ganttViewport">
+            <div id="chartWrapper" class="inline-block min-w-full">
                 <div id="dateHeader" class="flex date-header mb-2 border-b pb-2"></div>
                 <div id="taskContainer" class="relative"></div>
             </div>
         </div>
 
-        <!-- Active Tasks Table -->
+        <!-- Task Tables -->
         <div class="p-6 bg-white border-t border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-700 italic mb-4">進行中のタスク（クリックで編集・矢印で並び替え）</h2>
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">タスク一覧</h2>
             <div class="overflow-x-auto mb-8">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-100">
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">順序</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">タスク名</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">期間</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">進捗 / メモ</th>
-                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                            <th class="px-4 py-2 text-left text-xs text-gray-500">順序</th>
+                            <th class="px-4 py-2 text-left text-xs text-gray-500">タスク名</th>
+                            <th class="px-4 py-2 text-left text-xs text-gray-500">期間</th>
+                            <th class="px-4 py-2 text-left text-xs text-gray-500">進捗 / メモ</th>
+                            <th class="px-4 py-2 text-right text-xs text-gray-500">操作</th>
                         </tr>
                     </thead>
                     <tbody id="taskListBody" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
             </div>
 
-            <!-- Completed Tasks Section -->
-            <div id="completedTasksSection" class="mt-12 opacity-75">
-                <h2 class="text-lg font-semibold text-gray-500 mb-4 border-b pb-2 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    完了済みのタスク
-                </h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-gray-50 text-gray-400">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase">タスク名</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase">完了日（終了予定）</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase">メモ</th>
-                                <th class="px-4 py-2 text-right text-xs font-medium uppercase">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="completedListBody" class="bg-white divide-y divide-gray-50"></tbody>
-                    </table>
-                </div>
+            <div id="completedTasksSection" class="hidden opacity-60">
+                <h2 class="text-lg font-semibold text-gray-400 mb-4 border-b pb-2">完了済み</h2>
+                <tbody id="completedListBody"></tbody>
+                <table class="min-w-full divide-y divide-gray-100">
+                     <tbody id="completedListBody" class="bg-white divide-y divide-gray-50"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        // Data loading from LocalStorage
-        let tasks = JSON.parse(localStorage.getItem('gantt_tasks')) || [
-            { id: 1, name: 'プロジェクト開始', start: '2024-05-01', end: '2024-05-05', progress: 100, memo: '完了報告済み', color: '#3b82f6', completed: true },
-            { id: 2, name: '要件定義', start: '2024-05-06', end: '2024-05-15', progress: 60, memo: 'ステークホルダー調整中', color: '#10b981', completed: false }
-        ];
-
+        let tasks = JSON.parse(localStorage.getItem('gantt_tasks')) || [];
         const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+        const dayWidth = 40;
+        const nameColWidth = 192; // 48 * 4px (w-48)
 
         function saveToLocalStorage() {
             localStorage.setItem('gantt_tasks', JSON.stringify(tasks));
@@ -213,30 +187,22 @@
             document.getElementById('endDate').value = end.toISOString().split('T')[0];
             
             checkReminders();
-            scrollToToday();
+            scrollToToday(); // 今日を中心にスクロール
         }
 
         function checkNotifPermission() {
             if (!("Notification" in window)) return;
-            if (Notification.permission === "default") {
-                document.getElementById('notifBanner').classList.remove('hidden');
-            } else {
-                document.getElementById('notifBanner').classList.add('hidden');
-            }
+            if (Notification.permission === "default") document.getElementById('notifBanner').classList.remove('hidden');
         }
 
         function requestNotifPermission() {
-            Notification.requestPermission().then(permission => {
-                document.getElementById('notifBanner').classList.add('hidden');
-                if (permission === "granted") {
-                    new Notification("通知設定完了", { body: "当日、5日前、10日前の通知が有効になりました。" });
-                }
-            });
+            Notification.requestPermission().then(() => document.getElementById('notifBanner').classList.add('hidden'));
         }
 
         function dismissNotifBanner() {
             document.getElementById('notifBanner').classList.add('hidden');
         }
+
         function scrollToToday() {
             const viewport = document.getElementById('ganttViewport');
             const todayCol = document.querySelector('.today-column');
@@ -247,160 +213,71 @@
             }
         }
 
-        function checkReminders() {
-            if (Notification.permission !== "granted") return;
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            const todayTime = now.getTime();
-            const oneDayMs = 24 * 60 * 60 * 1000;
-
-            tasks.forEach(task => {
-                if (task.completed) return;
-                const endDate = new Date(task.end);
-                endDate.setHours(0, 0, 0, 0);
-                const diffDays = Math.round((endDate.getTime() - todayTime) / oneDayMs);
-
-                if (diffDays === 0) {
-                    new Notification("【本日締切】", { body: `タスク「${task.name}」の期限日です！` });
-                } else if (diffDays === 5) {
-                    new Notification("【期限5日前】", { body: `タスク「${task.name}」の期限まであと5日です。` });
-                } else if (diffDays === 10) {
-                    new Notification("【期限10日前】", { body: `タスク「${task.name}」の期限まであと10日です。` });
-                }
-            });
-        }
-
         function addTask() {
             const name = document.getElementById('taskName').value;
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
             const memo = document.getElementById('taskMemo').value;
-
             if (!name || !start || !end) return;
 
-            const newTask = {
+            tasks.push({
                 id: Date.now(),
-                name, start, end,
-                memo: memo || '',
-                progress: 0,
-                color: colors[tasks.length % colors.length],
+                name, start, end, memo: memo || '',
+                progress: 0, color: colors[tasks.length % colors.length],
                 completed: false
-            };
-
-            tasks.push(newTask);
+            });
             saveToLocalStorage();
             renderGantt();
-            renderTaskList();
-            checkReminders();
-            document.getElementById('taskName').value = '';
-            document.getElementById('taskMemo').value = '';
-        }
-
-        function moveTask(index, direction) {
-            // "進行中のタスク" 内でのインデックス計算が必要
-            const activeTasks = tasks.filter(t => !t.completed);
-            const targetTask = activeTasks[index];
-            const realIndex = tasks.indexOf(targetTask);
-            
-            const nextActiveTask = activeTasks[index + direction];
-            if (!nextActiveTask) return;
-            const nextRealIndex = tasks.indexOf(nextActiveTask);
-
-            // 入れ替え
-            const temp = tasks[realIndex];
-            tasks[realIndex] = tasks[nextRealIndex];
-            tasks[nextRealIndex] = temp;
-
-            saveToLocalStorage();
-            renderGantt();
-            renderTaskList();
-        }
-
-        function updateTaskField(id, field, value) {
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-                task[field] = value;
-                saveToLocalStorage();
-                renderGantt();
-                // 完了済みセクションも更新されるように再描画
-                renderTaskList();
-            }
-        }
-
-        function toggleComplete(id) {
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-                task.completed = !task.completed;
-                if (task.completed) {
-                    task.progress = 100;
-                } else {
-                    // 復元した時は少し進捗を戻すか、そのままにするか選べますが、ここでは100のまま保持
-                }
-                saveToLocalStorage();
-                renderGantt(); 
-                renderTaskList();
-            }
-        }
-
-        function deleteTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            saveToLocalStorage();
-            renderGantt(); 
             renderTaskList();
         }
 
         function getRange() {
             const activeTasks = tasks.filter(t => !t.completed);
             const now = new Date();
-            if (activeTasks.length === 0) {
-                const s = new Date(now); s.setDate(now.getDate() - 7);
-                const e = new Date(now); e.setDate(now.getDate() + 14);
-                return { start: s, end: e };
-            }
             const startDates = activeTasks.map(t => new Date(t.start));
             const endDates = activeTasks.map(t => new Date(t.end));
             const minDate = new Date(Math.min(...startDates, now));
-            minDate.setDate(minDate.getDate() - 5);
+            minDate.setDate(minDate.getDate() - 7);
             const maxDate = new Date(Math.max(...endDates, now));
-            maxDate.setDate(maxDate.getDate() + 10);
+            maxDate.setDate(maxDate.getDate() + 21);
             return { start: minDate, end: maxDate };
         }
 
         function renderGantt() {
             const range = getRange();
             const totalDays = Math.ceil((range.end - range.start) / (1000 * 60 * 60 * 24));
-            const dayWidth = 40;
             const todayStr = new Date().toISOString().split('T')[0];
             const dateHeader = document.getElementById('dateHeader');
             const taskContainer = document.getElementById('taskContainer');
             
-            dateHeader.innerHTML = '<div class="w-48 flex-shrink-0 font-bold text-gray-400 text-sm">タスク名</div>';
+            // Header
+            dateHeader.innerHTML = `<div class="w-48 flex-shrink-0 font-bold text-gray-400 text-sm sticky-col p-2">タスク名</div>`;
             taskContainer.innerHTML = '';
             
             for (let i = 0; i < totalDays; i++) {
                 const date = new Date(range.start); date.setDate(date.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0];
-                const isToday = dateStr === todayStr;
+                const isToday = date.toISOString().split('T')[0] === todayStr;
                 const dayDiv = document.createElement('div');
-                dayDiv.className = `day-column text-center text-xs text-gray-400 ${isToday ? 'today-column' : ''}`;
+                dayDiv.className = `day-column text-center text-[10px] text-gray-400 py-1 ${isToday ? 'today-column' : ''}`;
                 dayDiv.style.width = `${dayWidth}px`;
                 dayDiv.innerHTML = `${date.getMonth() + 1}/${date.getDate()}`;
-                if (isToday) {
-                    const line = document.createElement('div'); line.className = 'today-line';
-                    dayDiv.appendChild(line);
-                }
+                if (isToday) dayDiv.innerHTML += '<div class="today-line"></div>';
                 dateHeader.appendChild(dayDiv);
             }
 
+            // Tasks
             tasks.filter(t => !t.completed).forEach((task) => {
                 const row = document.createElement('div');
-                row.className = 'flex items-center mb-4 relative h-8';
-                const label = document.createElement('div');
-                label.className = 'w-48 flex-shrink-0 text-sm font-medium truncate pr-2';
-                label.innerText = task.name;
-                row.appendChild(label);
+                row.className = 'flex items-center mb-3 h-8 relative';
+                
+                // Sticky Name
+                const nameBox = document.createElement('div');
+                nameBox.className = 'w-48 flex-shrink-0 text-xs font-medium truncate pr-3 sticky-col p-2';
+                nameBox.innerText = task.name;
+                row.appendChild(nameBox);
+
                 const grid = document.createElement('div');
-                grid.className = 'flex-grow h-full relative border-l border-gray-100';
+                grid.className = 'flex relative h-full flex-grow';
                 
                 const taskStart = new Date(task.start);
                 const offsetDays = Math.ceil((taskStart - range.start) / (1000 * 60 * 60 * 24));
@@ -411,12 +288,11 @@
                 bar.style.left = `${offsetDays * dayWidth}px`;
                 bar.style.width = `${durationDays * dayWidth}px`;
                 bar.style.backgroundColor = task.color;
-                bar.innerHTML = `<span class="truncate text-[10px] font-bold">${task.progress}%</span>`;
+                bar.innerHTML = `
+                    <span class="truncate text-[10px] font-bold z-20 progress-text-${task.id}">${task.progress}%</span>
+                    <div class="progress-overlay progress-bar-${task.id}" style="width: ${task.progress}%"></div>
+                `;
                 
-                const progressOverlay = document.createElement('div');
-                progressOverlay.className = 'progress-overlay';
-                progressOverlay.style.width = `${task.progress}%`;
-                bar.appendChild(progressOverlay);
                 grid.appendChild(bar); row.appendChild(grid);
                 taskContainer.appendChild(row);
             });
@@ -424,87 +300,85 @@
 
         function renderTaskList() {
             const body = document.getElementById('taskListBody');
-            const completedBody = document.getElementById('completedListBody');
             body.innerHTML = '';
-            completedBody.innerHTML = '';
-
-            const activeTasks = tasks.filter(t => !t.completed);
-            const completedTasks = tasks.filter(t => t.completed);
-
-            // Render Active Tasks
-            activeTasks.forEach((task, index) => {
+            const active = tasks.filter(t => !t.completed);
+            active.forEach((task, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-400">
-                        <div class="flex flex-col">
-                            <button onclick="moveTask(${index}, -1)" class="hover:text-blue-600 ${index === 0 ? 'invisible' : ''}">▲</button>
-                            <button onclick="moveTask(${index}, 1)" class="hover:text-blue-600 ${index === activeTasks.length - 1 ? 'invisible' : ''}">▼</button>
-                        </div>
+                    <td class="px-4 py-2 text-xs text-gray-400">
+                        <button onclick="moveTask(${index}, -1)" class="${index===0?'invisible':''}">▲</button>
+                        <button onclick="moveTask(${index}, 1)" class="${index===active.length-1?'invisible':''}">▼</button>
                     </td>
-                    <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                    <td class="px-4 py-2 text-sm font-medium">
                         <input type="text" value="${task.name}" onchange="updateTaskField(${task.id}, 'name', this.value)" class="editable-input">
                     </td>
-                    <td class="px-4 py-3 text-xs text-gray-500">
-                        <input type="date" value="${task.start}" onchange="updateTaskField(${task.id}, 'start', this.value)" class="editable-input mb-1">
-                        <input type="date" value="${task.end}" onchange="updateTaskField(${task.id}, 'end', this.value)" class="editable-input">
+                    <td class="px-4 py-2 text-[10px] text-gray-500">
+                        <input type="date" value="${task.start}" onchange="updateTaskField(${task.id}, 'start', this.value)" class="block mb-1">
+                        <input type="date" value="${task.end}" onchange="updateTaskField(${task.id}, 'end', this.value)">
                     </td>
-                    <td class="px-4 py-3">
-                        <div class="flex items-center space-x-2 mb-1">
+                    <td class="px-4 py-2">
+                        <div class="flex items-center space-x-2">
                             <input type="range" min="0" max="100" value="${task.progress}" 
-                                oninput="this.nextElementSibling.innerText = this.value + '%'; updateTaskField(${task.id}, 'progress', parseInt(this.value))" 
-                                class="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                            <span class="text-xs text-gray-600 w-8">${task.progress}%</span>
+                                oninput="updateRangePreview(this, ${task.id})"
+                                onchange="updateTaskField(${task.id}, 'progress', parseInt(this.value))"
+                                class="w-20">
+                            <span class="text-[10px] range-val-${task.id}">${task.progress}%</span>
                         </div>
-                        <input type="text" value="${task.memo}" onchange="updateTaskField(${task.id}, 'memo', this.value)" placeholder="メモ..." 
-                            class="editable-input text-xs border-b border-gray-100">
+                        <input type="text" value="${task.memo}" onchange="updateTaskFieldNoRefresh(${task.id}, 'memo', this.value)" placeholder="メモ..." class="text-[10px] w-full border-b mt-1">
                     </td>
-                    <td class="px-4 py-3 text-right space-x-2">
-                        <button onclick="toggleComplete(${task.id})" class="text-green-600 hover:text-green-800 text-sm font-bold">完了にする</button>
-                        <button onclick="deleteTask(${task.id})" class="text-red-400 hover:text-red-600 text-sm">削除</button>
+                    <td class="px-4 py-2 text-right">
+                        <button onclick="toggleComplete(${task.id})" class="text-green-600 font-bold text-xs mr-2">完了</button>
+                        <button onclick="deleteTask(${task.id})" class="text-red-400 text-xs">削除</button>
                     </td>
                 `;
                 body.appendChild(tr);
             });
-
-            // Render Completed Tasks
-            completedTasks.forEach((task) => {
-                const tr = document.createElement('tr');
-                tr.className = "bg-gray-50";
-                tr.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-400 line-through font-medium">
-                        ${task.name}
-                    </td>
-                    <td class="px-4 py-3 text-xs text-gray-400">
-                        ${task.end}
-                    </td>
-                    <td class="px-4 py-3 text-xs text-gray-400 italic">
-                        ${task.memo || '-'}
-                    </td>
-                    <td class="px-4 py-3 text-right space-x-2">
-                        <button onclick="toggleComplete(${task.id})" class="text-blue-500 hover:text-blue-700 text-sm">復元</button>
-                        <button onclick="deleteTask(${task.id})" class="text-red-300 hover:text-red-500 text-sm">完全削除</button>
-                    </td>
-                `;
-                completedBody.appendChild(tr);
-            });
-
-            // Hide section if no completed tasks
-            document.getElementById('completedTasksSection').style.display = completedTasks.length ? 'block' : 'none';
         }
 
-        // スライダー操作中にリアルタイムで見た目だけ更新する関数（爆速化）
         function updateRangePreview(el, id) {
             const val = el.value + '%';
-            // 数値を更新
             document.querySelector(`.range-val-${id}`).innerText = val;
-            // ガントチャート上のバーとテキストを更新（DOMを直接触るので軽い）
             const bar = document.querySelector(`.progress-bar-${id}`);
             const text = document.querySelector(`.progress-text-${id}`);
             if (bar) bar.style.width = val;
             if (text) text.innerText = val;
-            
-            // データだけ更新（保存はするが再描画はしない）
             updateTaskFieldNoRefresh(id, 'progress', parseInt(el.value));
+        }
+
+        function updateTaskField(id, field, value) {
+            const task = tasks.find(t => t.id === id);
+            if (task) { task[field] = value; saveToLocalStorage(); renderGantt(); }
+        }
+
+        function updateTaskFieldNoRefresh(id, field, value) {
+            const task = tasks.find(t => t.id === id);
+            if (task) { task[field] = value; saveToLocalStorage(); }
+        }
+
+        function toggleComplete(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) { task.completed = !task.completed; if(task.completed) task.progress=100; saveToLocalStorage(); renderGantt(); renderTaskList(); }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveToLocalStorage(); renderGantt(); renderTaskList();
+        }
+
+        function moveTask(idx, dir) {
+            const active = tasks.filter(t => !t.completed);
+            const t1 = active[idx], t2 = active[idx+dir];
+            const i1 = tasks.indexOf(t1), i2 = tasks.indexOf(t2);
+            [tasks[i1], tasks[i2]] = [tasks[i2], tasks[i1]];
+            saveToLocalStorage(); renderGantt(); renderTaskList();
+        }
+
+        function checkReminders() {
+            if (Notification.permission !== "granted") return;
+            const today = new Date().toISOString().split('T')[0];
+            tasks.forEach(t => {
+                if (!t.completed && t.end === today) new Notification("締切", { body: `${t.name}は本日が期限です！` });
+            });
         }
 
         window.onload = init;
