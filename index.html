@@ -17,6 +17,14 @@
             height: 100%;
             position: relative;
         }
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 30;
+            background-color: white;
+            border-right: 2px solid #e5e7eb;
+            box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+        }
         .today-column {
             background-color: rgba(239, 68, 68, 0.15) !important; 
             border-left: 1px solid rgba(239, 68, 68, 0.3);
@@ -205,6 +213,7 @@
             document.getElementById('endDate').value = end.toISOString().split('T')[0];
             
             checkReminders();
+            scrollToToday();
         }
 
         function checkNotifPermission() {
@@ -227,6 +236,15 @@
 
         function dismissNotifBanner() {
             document.getElementById('notifBanner').classList.add('hidden');
+        }
+        function scrollToToday() {
+            const viewport = document.getElementById('ganttViewport');
+            const todayCol = document.querySelector('.today-column');
+            if (todayCol && viewport) {
+                // 今日が画面の中央付近に来るように計算
+                const offset = todayCol.offsetLeft - (viewport.clientWidth / 2) + (dayWidth / 2);
+                viewport.scrollLeft = offset > 0 ? offset : 0;
+            }
         }
 
         function checkReminders() {
